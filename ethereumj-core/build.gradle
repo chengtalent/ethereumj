@@ -21,9 +21,22 @@ plugins {
 
 apply plugin: 'propdeps-maven'
 apply plugin: 'com.jfrog.artifactory-upload'
+apply plugin: 'java'
 
+def config = new ConfigSlurper().parse(new File("$projectDir/src/main/resources/version.properties").toURI().toURL())
+
+group = 'org.ethereum'
+
+version = config.versionNumber + ("master" == gitCurBranch() ? "-RELEASE" : "-SNAPSHOT")
+
+println("Building version: " + version)
+
+compileJava.options.encoding = 'UTF-8'
+compileJava.options.compilerArgs << '-XDignore.symbol.file'
+compileTestJava.options.encoding = 'UTF-8'
 
 repositories {
+    jcenter()
     maven {
         url "http://dl.bintray.com/ethereum/maven"
     }
@@ -36,7 +49,6 @@ applicationDefaultJvmArgs = ["-server", "-Xss32m", "-XX:-OmitStackTraceInFastThr
 if (project.hasProperty("mainClass")) {
     mainClassName = mainClass
 }
-
 
 ext.generatedSrcDir = file('src/gen/java')
 
@@ -82,22 +94,22 @@ task tckRun(type:JavaExec){
 }
 
 
-
-test {
-
-    beforeTest { descriptor ->
-        logger.lifecycle("Running test: ${descriptor}")
-    }
-
-    jvmArgs '-Xss32m', '-Xmx3G'
-
-    testLogging {
-        events "failed"
-        exceptionFormat "short"
-    }
-
-    systemProperty "file.encoding", "UTF-8"
-}
+//
+//test {
+//
+//    beforeTest { descriptor ->
+//        logger.lifecycle("Running test: ${descriptor}")
+//    }
+//
+//    jvmArgs '-Xss32m', '-Xmx3G'
+//
+//    testLogging {
+//        events "failed"
+//        exceptionFormat "short"
+//    }
+//
+//    systemProperty "file.encoding", "UTF-8"
+//}
 
 ext {
     slf4jVersion = '1.7.7'
@@ -141,14 +153,15 @@ dependencies {
 
     compile "org.mapdb:mapdb:2.0-beta12"
 
-    compile "org.slf4j:slf4j-log4j12:${slf4jVersion}"
-    compile "log4j:apache-log4j-extras:${log4jVersion}"
+//    compile "org.slf4j:slf4j-log4j12:${slf4jVersion}"
+//    compile "log4j:apache-log4j-extras:${log4jVersion}"
 
     compile("com.googlecode.json-simple:json-simple:1.1.1") {
         exclude group: 'junit', module: 'junit'
     }
+
     optional "commons-logging:commons-logging:1.0"
-    optional "org.slf4j:jcl-over-slf4j:${slf4jVersion}"
+//    optional "org.slf4j:jcl-over-slf4j:${slf4jVersion}"
     testCompile "junit:junit:${junitVersion}"
     testCompile "org.springframework:spring-test:${springVersion}"
 }

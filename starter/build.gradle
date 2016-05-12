@@ -1,0 +1,37 @@
+dependencies {
+    compile project(":ethereumj-core")
+    compile ("org.springframework.boot:spring-boot-starter-web")
+
+
+    compile "com.google.guava:guava:18.0"
+//    compile ("org.ethereum:ethereumj-core:1.2.0-RELEASE"){
+//
+//        exclude group: "log4j"
+//        exclude group: "org.slf4j", module: "log4j-over-slf4j"
+//        exclude group: "org.slf4j", module: "slf4j-log4j12"
+//
+//    }
+
+}
+//
+//sourceSets {
+//    main {
+//        java {
+//            srcDir './src'
+//        }
+//    }
+//}
+//
+//task wrapper(type: Wrapper) {
+//    gradleVersion = '2.2.1'
+//}
+//
+//task stage {
+//    dependsOn bootRepackage
+//}
+//
+//
+//bootRun {
+//    jvmArgs = ["-server", "-Xms3g"]
+//}
+

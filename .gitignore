@@ -38,3 +38,6 @@ test_db*
 **/user.conf
 **/out.log
 **/user.log4j.properties
+
+ethereumj-core/testDB-1/
+ethereumj-core/testDB-2/
