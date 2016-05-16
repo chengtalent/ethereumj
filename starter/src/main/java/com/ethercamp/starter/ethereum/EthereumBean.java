@@ -31,9 +31,14 @@ public class EthereumBean {
         return ethereum.getBlockchain().getBlockByNumber(index).toString();
     }
 
+    public String getBlockByHash(byte[] hash){
+        return ethereum.getBlockchain().getBlockByHash(hash).toString();
+    }
+
     public String getTransactionInfo(byte[] hash){
         TransactionInfo transactionInfo = ((org.ethereum.core.Blockchain)(ethereum.getBlockchain())).getTransactionInfo(hash);
-        return transactionInfo.getReceipt().getTransaction().toString();
+        return transactionInfo.getReceipt().getTransaction().toString() + "\n"
+                + transactionInfo.getReceipt().toString();
     }
 
     public BlockMiner getBlockMiner(){
