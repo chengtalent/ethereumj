@@ -12,6 +12,7 @@ import org.ethereum.mine.MinerListener;
 import org.ethereum.util.ByteUtil;
 import org.spongycastle.util.encoders.Hex;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -55,7 +56,7 @@ public class EthereumBean {
 
             for(int j=blockTxList.size()-1; j>=0; --j){
                 Transaction tx = blockTxList.get(j);
-                if(tx.getReceiveAddress().equals(receive)){
+                if(Arrays.equals(tx.getReceiveAddress(), receive)){
                     transactionList.add(tx);
                 }
             }
@@ -74,7 +75,7 @@ public class EthereumBean {
 
             for(int j=blockTxList.size()-1; j>=0; --j){
                 Transaction tx = blockTxList.get(j);
-                if(tx.getReceiveAddress().equals(receive)){
+                if(Arrays.equals(tx.getReceiveAddress(), receive)){
                     transactionList.add(tx);
                     receive = tx.getSender();
                 }
