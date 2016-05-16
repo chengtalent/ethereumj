@@ -33,7 +33,7 @@ public class EthereumBean {
 
     public String getTransactionInfo(byte[] hash){
         TransactionInfo transactionInfo = ((org.ethereum.core.Blockchain)(ethereum.getBlockchain())).getTransactionInfo(hash);
-        return transactionInfo.toString();
+        return transactionInfo.getReceipt().getTransaction().toString();
     }
 
     public BlockMiner getBlockMiner(){
