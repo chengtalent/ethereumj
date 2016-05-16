@@ -170,4 +170,18 @@ public class MyRestController {
         byte[] hashCode = Hex.decode(hash);
         return ethereumBean.getBlockByHash(hashCode);
     }
+
+    @RequestMapping(value = "/getTransactionHistory", method = GET, produces = APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public String getTransactionHistory(@RequestParam("receive") String receive) throws IOException {
+        byte[] receiverAddr = Hex.decode(receive);
+        return Utils.convertToString(ethereumBean.getTransactionHistory(receiverAddr));
+    }
+
+    @RequestMapping(value = "/getTransactionHistoryTrack", method = GET, produces = APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public String getTransactionHistoryTrack(@RequestParam("receive") String receive) throws IOException {
+        byte[] receiverAddr = Hex.decode(receive);
+        return Utils.convertToString(ethereumBean.getTransactionHistoryTrack(receiverAddr));
+    }
 }
