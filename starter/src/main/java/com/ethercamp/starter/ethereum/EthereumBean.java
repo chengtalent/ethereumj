@@ -2,6 +2,7 @@ package com.ethercamp.starter.ethereum;
 
 import org.ethereum.core.Block;
 import org.ethereum.core.Transaction;
+import org.ethereum.core.TransactionInfo;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.facade.EthereumFactory;
 import org.ethereum.mine.BlockMiner;
@@ -30,6 +31,11 @@ public class EthereumBean {
         return ethereum.getBlockchain().getBlockByNumber(index).toString();
     }
 
+    public String getTransactionInfo(byte[] hash){
+        TransactionInfo transactionInfo = ((org.ethereum.core.Blockchain)(ethereum.getBlockchain())).getTransactionInfo(hash);
+        return transactionInfo.toString();
+    }
+
     public BlockMiner getBlockMiner(){
         return ethereum.getBlockMiner();
     }
@@ -41,29 +47,29 @@ public class EthereumBean {
             blockMiner.addListener(new MinerListener() {
                 @Override
                 public void miningStarted() {
-                    System.out.println("=== MinerTest.miningStarted");
+                    System.out.println("=== Miner.miningStarted");
                 }
 
                 @Override
                 public void miningStopped() {
-                    System.out.println("=== MinerTest.miningStopped");
+                    System.out.println("=== Miner.miningStopped");
                 }
 
                 @Override
                 public void blockMiningStarted(Block block) {
-                    System.out.println("=== MinerTest.blockMiningStarted " + blockInfo(block));
+                    System.out.println("=== Miner.blockMiningStarted " + blockInfo(block));
                 }
 
                 @Override
                 public void blockMined(Block block) {
 //                boolean validate = Ethash.getForBlock(block.getNumber()).validate(block.getHeader());
-                    System.out.println("=== MinerTest.blockMined " + blockInfo(block));
+                    System.out.println("=== Miner.blockMined " + blockInfo(block));
 //                System.out.println("=== MinerTest.blockMined: " + validate);
                 }
 
                 @Override
                 public void blockMiningCanceled(Block block) {
-                    System.out.println("=== MinerTest.blockMiningCanceled " + blockInfo(block));
+                    System.out.println("=== Miner.blockMiningCanceled " + blockInfo(block));
                 }
             });
 

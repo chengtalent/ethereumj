@@ -156,4 +156,11 @@ public class MyRestController {
         ethereumBean.stopMining();
         return "Success";
     }
+
+    @RequestMapping(value = "/getTransaction", method = GET, produces = APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public String getTransaction(@RequestParam("hash") String hash) throws IOException {
+        byte[] hashCode = Hex.decode(hash);
+        return ethereumBean.getTransactionInfo(hashCode);
+    }
 }
