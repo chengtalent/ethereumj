@@ -10,6 +10,8 @@ import org.ethereum.mine.BlockMiner;
 import org.ethereum.mine.Ethash;
 import org.ethereum.mine.MinerListener;
 import org.ethereum.util.ByteUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 
 import java.util.Arrays;
@@ -21,6 +23,8 @@ public class EthereumBean {
 
     public Ethereum ethereum;
     public BlockMiner blockMiner;
+
+    private static final Logger logger = LoggerFactory.getLogger("mine");
 
     public void start(){
         this.ethereum = EthereumFactory.createEthereum();
@@ -52,6 +56,11 @@ public class EthereumBean {
 
         for(long i=blockchain.getBestBlock().getNumber(); i>=0; --i){
             Block block = blockchain.getBlockByNumber(i);
+            if(block == null){
+                logger.info("GetTransactionHistory - getBlockByNumber() return null for number: {}", i);
+                continue;
+            }
+
             List<Transaction> blockTxList = block.getTransactionsList();
 
             for(int j=blockTxList.size()-1; j>=0; --j){
@@ -71,6 +80,11 @@ public class EthereumBean {
 
         for(long i=blockchain.getBestBlock().getNumber(); i>=0; --i){
             Block block = blockchain.getBlockByNumber(i);
+            if(block == null){
+                logger.info("GetTransactionHistory - getBlockByNumber() return null for number: {}", i);
+                continue;
+            }
+
             List<Transaction> blockTxList = block.getTransactionsList();
 
             for(int j=blockTxList.size()-1; j>=0; --j){
