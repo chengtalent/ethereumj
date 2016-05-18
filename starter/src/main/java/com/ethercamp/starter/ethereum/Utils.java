@@ -3,8 +3,12 @@ package com.ethercamp.starter.ethereum;
 import org.ethereum.core.Repository;
 import org.ethereum.core.Transaction;
 import org.ethereum.crypto.ECKey;
+import org.ethereum.solidity.compiler.CompilationResult;
+import org.ethereum.solidity.compiler.SolidityCompiler;
 import org.spongycastle.util.encoders.Hex;
+import org.springframework.util.StringUtils;
 
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
@@ -44,5 +48,24 @@ public class Utils {
         }
 
         return str;
+    }
+
+    public static CompilationResult getContractCompilationResult(String contractName){
+        String contract = new Contract().getSolidityCode(contractName);
+        if(StringUtils.isEmpty(contract))
+            return null;
+
+        SolidityCompiler.Result res = null;
+        CompilationResult cres = null;
+        try {
+            res = SolidityCompiler.compile(
+                    contract.getBytes(), true, SolidityCompiler.Options.ABI, SolidityCompiler.Options.BIN);
+            System.out.println(res.errors);
+            cres = CompilationResult.parse(res.output);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return cres;
     }
 }

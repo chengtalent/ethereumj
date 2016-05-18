@@ -6,18 +6,17 @@ import org.ethereum.facade.Blockchain;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.facade.EthereumFactory;
 import org.ethereum.facade.Repository;
+import org.ethereum.jsonrpc.TypeConverter;
 import org.ethereum.mine.BlockMiner;
 import org.ethereum.mine.Ethash;
 import org.ethereum.mine.MinerListener;
 import org.ethereum.solidity.compiler.CompilationResult;
-import org.ethereum.solidity.compiler.SolidityCompiler;
 import org.ethereum.util.ByteUtil;
 import org.ethereum.vm.program.ProgramResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -142,50 +141,33 @@ public class EthereumBean {
         return "error";
     }
 
-    public String submitContract(String sendPK){
-        String contract =
-                "contract PsychoKiller {" +
-                        "    function homicide() {" +
-                        "        suicide(msg.sender);" +
-                        "    }" +
-                        "    function multipleHomocide() {" +
-                        "        PsychoKiller k  = this;" +
-                        "        k.homicide();" +
-                        "        k.homicide();" +
-                        "        k.homicide();" +
-                        "        k.homicide();" +
-                        "    }" +
-                        "}";
-        SolidityCompiler.Result res = null;
-        CompilationResult cres = null;
-        try {
-            res = SolidityCompiler.compile(
-                    contract.getBytes(), true, SolidityCompiler.Options.ABI, SolidityCompiler.Options.BIN);
-            System.out.println(res.errors);
-            cres = CompilationResult.parse(res.output);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public String submitContract(String sendPK, String contractName, String func){
+        CompilationResult cres = Utils.getContractCompilationResult(contractName);
+        if(cres == null)
+            return "";
 
         BlockchainImpl blockchain = (BlockchainImpl)ethereum.getBlockchain();
-
         ECKey sender = ECKey.fromPrivate(Hex.decode(sendPK));
+        String contractAddressStr = null;
 
-        if(cres.contracts.get("PsychoKiller") != null) {
-
-            Transaction tx = createTx(blockchain, sender, new byte[0], Hex.decode(cres.contracts.get("PsychoKiller").bin), 1L);
+        if(cres.contracts.get(contractName) != null) {
+            Transaction tx = createTx(blockchain, sender, new byte[0], Hex.decode(cres.contracts.get(contractName).bin), 1L);
             executeTransaction(blockchain, tx);
 
             byte[] contractAddress = tx.getContractAddress();
-            CallTransaction.Contract contract1 = new CallTransaction.Contract(cres.contracts.get("PsychoKiller").abi);
-            byte[] callData = contract1.getByName("multipleHomocide").encode();
+            contractAddressStr = Hex.toHexString(contractAddress);
+
+            CallTransaction.Contract contract1 = new CallTransaction.Contract(cres.contracts.get(contractName).abi);
+            byte[] callData = contract1.getByName(func).encode();
 
             Transaction tx1 = createTx(blockchain, sender, contractAddress, callData);
             ProgramResult programResult = executeTransaction(blockchain, tx1);
 
-            // suicide of a single account should be counted only once
-            //Assert.assertEquals(programResult.getFutureRefund(), 24000);
-            return String.valueOf(programResult.getFutureRefund());
+            // suicide of a single account should be counted only once  for contract PsychoKiller.sol
+            // Assert.assertEquals(programResult.getFutureRefund(), 24000);
+            return TypeConverter.toJsonHex(programResult.getHReturn()) + "\n"
+                    + contractAddressStr + "\n"
+                    + String.valueOf(programResult.getFutureRefund());
         }
 
         return "";
