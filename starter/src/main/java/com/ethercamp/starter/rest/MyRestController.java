@@ -104,11 +104,13 @@ public class MyRestController {
         return  ethereumBean.submitTransaction(sendPK, receive, value, data);
     }
 
-    @RequestMapping(value = "/transaction", method = POST, produces = APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/contract", method = POST, produces = APPLICATION_JSON_VALUE)
     @ResponseBody
-    public String submitContract(@RequestParam("sendPK") String sendPK) throws IOException {
+    public String submitContract(@RequestParam("sendPK") String sendPK,
+                                 @RequestParam("contractName") String contractName,
+                                 @RequestParam("func") String func) throws IOException {
 
-        return  ethereumBean.submitContract(sendPK);
+        return  ethereumBean.submitContract(sendPK, contractName, func);
     }
 
     @RequestMapping(value = "/close", method = GET, produces = APPLICATION_JSON_VALUE)
