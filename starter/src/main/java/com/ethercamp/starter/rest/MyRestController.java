@@ -3,11 +3,8 @@ package com.ethercamp.starter.rest;
 
 import com.ethercamp.starter.ethereum.EthereumBean;
 import com.ethercamp.starter.ethereum.Utils;
-import org.ethereum.core.Transaction;
-import org.ethereum.crypto.ECKey;
 import org.ethereum.facade.Repository;
 import org.ethereum.net.rlpx.Node;
-import org.ethereum.util.ByteUtil;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.concurrent.Future;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
@@ -55,9 +51,7 @@ public class MyRestController {
         String r = coreRep.createAccount(Utils.getAddress(pk)).toString();
         r += ";\n";
         r += Hex.toHexString(Utils.getAddress(pk));
-
         coreRep.flush();
-
         return r;
     }
 
@@ -102,34 +96,19 @@ public class MyRestController {
 
     @RequestMapping(value = "/transaction", method = POST, produces = APPLICATION_JSON_VALUE)
     @ResponseBody
-    public String submiteTransaction(@RequestParam("sendPK") String sendPK,
+    public String submitTransaction(@RequestParam("sendPK") String sendPK,
                                      @RequestParam("receive") String receive,
                                      @RequestParam("value") String value,
                                      @RequestParam("data") String data) throws IOException {
 
-        ECKey senderKey = ECKey.fromPrivate(Hex.decode(sendPK));
-        byte[] receiverAddr = Hex.decode(receive);
-        byte[] address = senderKey.getAddress();
+        return  ethereumBean.submitTransaction(sendPK, receive, value, data);
+    }
 
-        Repository repository = ethereumBean.ethereum.getRepository();
+    @RequestMapping(value = "/transaction", method = POST, produces = APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public String submitContract(@RequestParam("sendPK") String sendPK) throws IOException {
 
-        int i = repository.getNonce(address).intValue();
-        long lValue = Long.parseLong(value);
-
-        Transaction tx = new Transaction(
-                ByteUtil.intToBytesNoLeadZeroes(i),
-                ByteUtil.longToBytesNoLeadZeroes(0L),
-                //ByteUtil.longToBytesNoLeadZeroes(ethereumBean.ethereum.getGasPrice()),
-                ByteUtil.longToBytesNoLeadZeroes(0xfffff),
-                receiverAddr,
-                ByteUtil.longToBytesNoLeadZeroes(lValue),
-                data.getBytes());
-
-        tx.sign(senderKey.getPrivKeyBytes());
-        System.out.println("=== Submitting tx: " + tx);
-        Future<Transaction> ft = ethereumBean.ethereum.submitTransaction(tx);
-
-        return ft.toString();
+        return  ethereumBean.submitContract(sendPK);
     }
 
     @RequestMapping(value = "/close", method = GET, produces = APPLICATION_JSON_VALUE)

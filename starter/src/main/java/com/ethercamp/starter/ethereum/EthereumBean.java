@@ -1,22 +1,29 @@
 package com.ethercamp.starter.ethereum;
 
-import org.ethereum.core.Block;
-import org.ethereum.core.Transaction;
-import org.ethereum.core.TransactionInfo;
+import org.ethereum.core.*;
+import org.ethereum.crypto.ECKey;
 import org.ethereum.facade.Blockchain;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.facade.EthereumFactory;
+import org.ethereum.facade.Repository;
 import org.ethereum.mine.BlockMiner;
 import org.ethereum.mine.Ethash;
 import org.ethereum.mine.MinerListener;
+import org.ethereum.solidity.compiler.CompilationResult;
+import org.ethereum.solidity.compiler.SolidityCompiler;
 import org.ethereum.util.ByteUtil;
+import org.ethereum.vm.program.ProgramResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 
+import java.io.IOException;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 
 public class EthereumBean {
@@ -97,6 +104,122 @@ public class EthereumBean {
         }
 
         return transactionList;
+    }
+
+    public String submitTransaction(String sendPK,
+                                    String receive,
+                                    String value,
+                                    String data){
+        ECKey senderKey = ECKey.fromPrivate(Hex.decode(sendPK));
+        byte[] receiverAddr = Hex.decode(receive);
+        byte[] address = senderKey.getAddress();
+
+        Repository repository = ethereum.getRepository();
+
+        int i = repository.getNonce(address).intValue();
+        long lValue = Long.parseLong(value);
+
+        Transaction tx = new Transaction(
+                ByteUtil.intToBytesNoLeadZeroes(i),
+                ByteUtil.longToBytesNoLeadZeroes(0L),
+                //ByteUtil.longToBytesNoLeadZeroes(ethereumBean.ethereum.getGasPrice()),
+                ByteUtil.longToBytesNoLeadZeroes(0xfffff),
+                receiverAddr,
+                ByteUtil.longToBytesNoLeadZeroes(lValue),
+                data.getBytes());
+
+        tx.sign(senderKey.getPrivKeyBytes());
+        System.out.println("=== Submitting tx: " + tx);
+        Future<Transaction> ft = ethereum.submitTransaction(tx);
+
+        try {
+            return ft.get().toString();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        return "error";
+    }
+
+    public String submitContract(String sendPK){
+        String contract =
+                "contract PsychoKiller {" +
+                        "    function homicide() {" +
+                        "        suicide(msg.sender);" +
+                        "    }" +
+                        "    function multipleHomocide() {" +
+                        "        PsychoKiller k  = this;" +
+                        "        k.homicide();" +
+                        "        k.homicide();" +
+                        "        k.homicide();" +
+                        "        k.homicide();" +
+                        "    }" +
+                        "}";
+        SolidityCompiler.Result res = null;
+        CompilationResult cres = null;
+        try {
+            res = SolidityCompiler.compile(
+                    contract.getBytes(), true, SolidityCompiler.Options.ABI, SolidityCompiler.Options.BIN);
+            System.out.println(res.errors);
+            cres = CompilationResult.parse(res.output);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        BlockchainImpl blockchain = (BlockchainImpl)ethereum.getBlockchain();
+
+        ECKey sender = ECKey.fromPrivate(Hex.decode(sendPK));
+
+        if(cres.contracts.get("PsychoKiller") != null) {
+
+            Transaction tx = createTx(blockchain, sender, new byte[0], Hex.decode(cres.contracts.get("PsychoKiller").bin), 1L);
+            executeTransaction(blockchain, tx);
+
+            byte[] contractAddress = tx.getContractAddress();
+            CallTransaction.Contract contract1 = new CallTransaction.Contract(cres.contracts.get("PsychoKiller").abi);
+            byte[] callData = contract1.getByName("multipleHomocide").encode();
+
+            Transaction tx1 = createTx(blockchain, sender, contractAddress, callData);
+            ProgramResult programResult = executeTransaction(blockchain, tx1);
+
+            // suicide of a single account should be counted only once
+            //Assert.assertEquals(programResult.getFutureRefund(), 24000);
+            return String.valueOf(programResult.getFutureRefund());
+        }
+
+        return "";
+    }
+
+    private Transaction createTx(BlockchainImpl blockchain, ECKey sender, byte[] receiveAddress, byte[] data) {
+        return createTx(blockchain, sender, receiveAddress, data, 1);
+    }
+
+    private Transaction createTx(BlockchainImpl blockchain, ECKey sender, byte[] receiveAddress, byte[] data, long value) {
+        BigInteger nonce = blockchain.getRepository().getNonce(sender.getAddress());
+        Transaction tx = new Transaction(
+                ByteUtil.bigIntegerToBytes(nonce),
+                ByteUtil.longToBytesNoLeadZeroes(0L),
+                ByteUtil.longToBytesNoLeadZeroes(0xfffff),
+                receiveAddress,
+                ByteUtil.longToBytesNoLeadZeroes(value),
+                data);
+        tx.sign(sender.getPrivKeyBytes());
+        return tx;
+    }
+
+    private ProgramResult executeTransaction(BlockchainImpl blockchain, Transaction tx) {
+        org.ethereum.core.Repository track = blockchain.getRepository().startTracking();
+        TransactionExecutor executor = new TransactionExecutor(tx, new byte[32], blockchain.getRepository(),
+                blockchain.getBlockStore(), blockchain.getProgramInvokeFactory(), blockchain.getBestBlock());
+
+        executor.init();
+        executor.execute();
+        executor.go();
+        executor.finalization();
+
+        track.commit();
+        return executor.getResult();
     }
 
     public BlockMiner getBlockMiner(){
