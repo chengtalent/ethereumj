@@ -166,6 +166,7 @@ public class EthereumBean {
             // suicide of a single account should be counted only once  for contract PsychoKiller.sol
             // Assert.assertEquals(programResult.getFutureRefund(), 24000);
             return TypeConverter.toJsonHex(programResult.getHReturn()) + "\n"
+                    + programResult.getHReturn() + "\n"
                     + contractAddressStr + "\n"
                     + String.valueOf(programResult.getFutureRefund());
         }
