@@ -151,7 +151,7 @@ public class EthereumBean {
         String contractAddressStr = null;
 
         if(cres.contracts.get(contractName) != null) {
-            Transaction tx = createTx(blockchain, sender, new byte[0], Hex.decode(cres.contracts.get(contractName).bin), 1L);
+            Transaction tx = createTx(blockchain, sender, new byte[0], Hex.decode(cres.contracts.get(contractName).bin), 0L);
             executeTransaction(blockchain, tx);
 
             byte[] contractAddress = tx.getContractAddress();
@@ -175,7 +175,7 @@ public class EthereumBean {
     }
 
     private Transaction createTx(BlockchainImpl blockchain, ECKey sender, byte[] receiveAddress, byte[] data) {
-        return createTx(blockchain, sender, receiveAddress, data, 1);
+        return createTx(blockchain, sender, receiveAddress, data, 0);
     }
 
     private Transaction createTx(BlockchainImpl blockchain, ECKey sender, byte[] receiveAddress, byte[] data, long value) {
